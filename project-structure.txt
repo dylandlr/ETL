@@ -1,0 +1,38 @@
+etl_pipeline/
+├── docker/
+│   ├── Dockerfile
+│   └── docker-compose.yml
+├── src/
+│   ├── extract/
+│   │   ├── __init__.py
+│   │   └── extractors/
+│   │       ├── __init__.py
+│   │       ├── base.py
+│   │       └── postgres_extractor.py
+│   ├── transform/
+│   │   ├── __init__.py
+│   │   └── transformers/
+│   │       ├── __init__.py
+│   │       ├── base.py
+│   │       └── data_cleaner.py
+│   ├── load/
+│   │   ├── __init__.py
+│   │   └── loaders/
+│   │       ├── __init__.py
+│   │       ├── base.py
+│   │       └── postgres_loader.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── config.py
+│       └── logger.py
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py
+│   ├── test_extract/
+│   ├── test_transform/
+│   └── test_load/
+├── .env.example
+├── .gitignore
+├── poetry.lock
+├── pyproject.toml
+└── README.md
