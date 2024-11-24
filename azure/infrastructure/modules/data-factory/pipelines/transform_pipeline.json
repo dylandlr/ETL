@@ -1,0 +1,89 @@
+{
+    "name": "pl-transform-data",
+    "properties": {
+        "activities": [
+            {
+                "name": "Transform Data",
+                "type": "DatabricksNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookPath": "/ETL/data_transformation",
+                    "baseParameters": {
+                        "input_path": {
+                            "value": "@pipeline().parameters.inputPath",
+                            "type": "Expression"
+                        },
+                        "output_path": {
+                            "value": "@pipeline().parameters.outputPath",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "ls_databricks",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Data Quality Check",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Transform Data",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookPath": "/ETL/data_quality",
+                    "baseParameters": {
+                        "table_path": {
+                            "value": "@pipeline().parameters.outputPath",
+                            "type": "Expression"
+                        },
+                        "quality_metrics_path": {
+                            "value": "@pipeline().parameters.metricsPath",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "ls_databricks",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "parameters": {
+            "inputPath": {
+                "type": "string"
+            },
+            "outputPath": {
+                "type": "string"
+            },
+            "metricsPath": {
+                "type": "string"
+            }
+        },
+        "variables": {
+            "processedRows": {
+                "type": "String"
+            }
+        },
+        "annotations": []
+    }
+}

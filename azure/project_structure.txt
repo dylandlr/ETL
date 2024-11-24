@@ -1,0 +1,87 @@
+azure-etl-project/
+│
+├── .github/                              # GitHub specific configurations
+│   └── workflows/                        # GitHub Actions workflows
+│       ├── ci.yml                        # CI pipeline
+│       └── cd.yml                        # CD pipeline
+│
+├── infrastructure/                       # IaC with Terraform
+│   ├── environments/                     # Environment-specific configurations
+│   │   ├── dev/
+│   │   │   ├── backend.tf               # Dev state backend configuration
+│   │   │   ├── main.tf                  # Dev environment configuration
+│   │   │   └── terraform.tfvars         # Dev variables
+│   │   └── prod/
+│   │       ├── backend.tf               # Prod state backend configuration
+│   │       ├── main.tf                  # Prod environment configuration
+│   │       └── terraform.tfvars         # Prod variables
+│   ├── modules/                         # Reusable Terraform modules
+│   │   ├── data-factory/               # ADF module
+│   │   │   ├── main.tf
+│   │   │   ├── variables.tf
+│   │   │   └── outputs.tf
+│   │   ├── databricks/                 # Databricks module
+│   │   │   ├── main.tf
+│   │   │   ├── variables.tf
+│   │   │   └── outputs.tf
+│   │   └── synapse/                    # Synapse module
+│   │       ├── main.tf
+│   │       ├── variables.tf
+│   │       └── outputs.tf
+│   ├── main.tf                         # Main Terraform configuration
+│   ├── variables.tf                    # Variable definitions
+│   ├── outputs.tf                      # Output definitions
+│   └── providers.tf                    # Provider configurations
+│
+├── src/                                # Source code
+│   ├── databricks/                     # Databricks notebooks and code
+│   │   ├── notebooks/
+│   │   │   ├── transform.py           # Main transformation logic
+│   │   │   ├── quality_check.py       # Data quality checks
+│   │   │   └── utils.py              # Utility functions
+│   │   └── requirements.txt           # Python dependencies
+│   │
+│   ├── data_factory/                  # ADF configurations
+│   │   ├── linkedServices/            # Connection definitions
+│   │   │   ├── AzureDatabricks.json
+│   │   │   ├── AzureKeyVault.json
+│   │   │   └── AzureSynapse.json
+│   │   ├── datasets/                  # Dataset definitions
+│   │   │   ├── SourceData.json
+│   │   │   └── StagingData.json
+│   │   └── pipelines/                 # Pipeline definitions
+│   │       ├── MainETLPipeline.json
+│   │       └── ErrorHandlingPipeline.json
+│   │
+│   └── synapse/                       # Synapse artifacts
+│       ├── scripts/                   # SQL scripts
+│       │   ├── create_tables.sql
+│       │   ├── stored_procedures.sql
+│       │   └── views.sql
+│       └── schemas/                   # Table schemas
+│           └── schema_definitions.json
+│
+├── tests/                             # Test suite
+│   ├── unit/                         # Unit tests
+│   │   ├── test_transformations.py
+│   │   └── test_quality_checks.py
+│   ├── integration/                  # Integration tests
+│   │   └── test_pipeline.py
+│   └── conftest.py                   # Test configurations
+│
+├── docs/                             # Documentation
+│   ├── architecture.md              # Architecture overview
+│   ├── deployment.md               # Deployment guide
+│   └── maintenance.md              # Maintenance procedures
+│
+├── monitoring/                      # Monitoring configurations
+│   ├── dashboards/                 # Azure Dashboard definitions
+│   │   └── etl_dashboard.json
+│   └── alerts/                     # Alert rules
+│       └── alert_rules.json
+│
+├── .gitignore                      # Git ignore rules
+├── README.md                       # Project documentation
+├── requirements.txt                # Python dependencies
+├── requirements-dev.txt            # Development dependencies
+└── azure-pipelines.yml            # Azure DevOps pipeline definition

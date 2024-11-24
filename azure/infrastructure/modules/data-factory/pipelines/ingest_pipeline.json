@@ -1,0 +1,62 @@
+{
+    "name": "pl-ingest-data",
+    "properties": {
+        "activities": [
+            {
+                "name": "Validate Input Data",
+                "type": "Validation",
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "ds_raw_input",
+                        "type": "DatasetReference"
+                    },
+                    "timeout": "0.00:10:00",
+                    "minimumSize": 1024
+                }
+            },
+            {
+                "name": "Copy to Raw",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "Validate Input Data",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.01:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "BinarySource",
+                        "storeSettings": {
+                            "type": "AzureBlobStorageReadSettings",
+                            "recursive": true
+                        }
+                    },
+                    "sink": {
+                        "type": "BinarySink",
+                        "storeSettings": {
+                            "type": "AzureBlobStorageWriteSettings"
+                        }
+                    },
+                    "enableStaging": false
+                }
+            }
+        ],
+        "parameters": {
+            "WindowStartTime": {
+                "type": "string"
+            },
+            "WindowEndTime": {
+                "type": "string"
+            }
+        },
+        "annotations": ["IngestPipeline"],
+        "folder": {
+            "name": "Ingestion"
+        }
+    }
+}

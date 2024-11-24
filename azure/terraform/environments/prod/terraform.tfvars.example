@@ -1,0 +1,16 @@
+# Azure Resource Configuration - Production
+environment             = "production"
+location                = "eastus2"
+resource_group_name     = "rg-etl-prod"
+data_factory_name       = "adf-etl-prod"
+key_vault_name          = "kv-etl-prod"
+storage_account_name    = "saetlprod"
+databricks_workspace_name = "dbw-etl-prod"
+
+# Tags
+tags = {
+  Environment = "Production"
+  Project     = "ETL Pipeline"
+  Owner       = "Data Engineering"
+  ManagedBy   = "Terraform"
+}

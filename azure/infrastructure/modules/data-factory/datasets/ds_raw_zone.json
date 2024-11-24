@@ -1,0 +1,26 @@
+{
+    "name": "ds_raw_zone",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "ls_adls_raw",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "container": {
+                "type": "string",
+                "defaultValue": "raw"
+            }
+        },
+        "annotations": [],
+        "type": "Binary",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "container": {
+                    "value": "@dataset().container",
+                    "type": "Expression"
+                }
+            }
+        }
+    }
+}

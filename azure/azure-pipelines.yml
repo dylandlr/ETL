@@ -1,0 +1,201 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - ETL/azure/**
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  - group: etl-variables
+  - name: pythonVersion
+    value: '3.9'
+  - name: terraformVersion
+    value: '1.5.0'
+
+stages:
+- stage: Validate
+  jobs:
+  - job: CodeQuality
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+        addToPath: true
+    
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pylint pytest pytest-cov black python-dotenv databricks-cli azure-identity azure-keyvault-secrets
+      displayName: 'Install dependencies'
+    
+    - script: |
+        black --check ETL/azure/src
+      displayName: 'Check code formatting'
+    
+    - script: |
+        pylint ETL/azure/src --rcfile=.pylintrc
+      displayName: 'Run linting'
+    
+    - script: |
+        pytest ETL/azure/tests --doctest-modules --junitxml=junit/test-results.xml --cov=ETL/azure/src --cov-report=xml --cov-report=html
+      displayName: 'Run tests'
+    
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-results.xml'
+        testRunTitle: 'Python Tests'
+    
+    - task: PublishCodeCoverageResults@1
+      inputs:
+        codeCoverageTool: Cobertura
+        summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+        reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+
+- stage: Infrastructure
+  dependsOn: Validate
+  jobs:
+  - job: TerraformDeploy
+    steps:
+    - task: TerraformInstaller@0
+      inputs:
+        terraformVersion: $(terraformVersion)
+    
+    - task: TerraformTaskV3@3
+      inputs:
+        provider: 'azurerm'
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/ETL/azure/infrastructure'
+        backendServiceArm: '$(AZURE_RM_CONNECTION)'
+        backendAzureRmResourceGroupName: '$(TERRAFORM_STORAGE_RG)'
+        backendAzureRmStorageAccountName: '$(TERRAFORM_STORAGE_ACCOUNT)'
+        backendAzureRmContainerName: '$(TERRAFORM_CONTAINER)'
+        backendAzureRmKey: 'terraform.tfstate'
+    
+    - task: TerraformTaskV3@3
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/ETL/azure/infrastructure'
+        environmentServiceNameAzureRM: '$(AZURE_RM_CONNECTION)'
+    
+    - task: TerraformTaskV3@3
+      name: TerraformApply
+      condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/ETL/azure/infrastructure'
+        environmentServiceNameAzureRM: '$(AZURE_RM_CONNECTION)'
+
+    - pwsh: |
+        # Get Terraform outputs
+        $outputs = terraform output -json
+        $outputObj = $outputs | ConvertFrom-Json
+
+        # Create .env content
+        $envContent = @"
+        # Azure Resource Information
+        RESOURCE_GROUP_NAME=$($outputObj.resource_group_name.value)
+        KEY_VAULT_URI=$($outputObj.key_vault_uri.value)
+        STORAGE_ACCOUNT_NAME=$($outputObj.storage_account_name.value)
+        DATALAKE_URL=$($outputObj.datalake_url.value)
+
+        # Data Factory Information
+        DATA_FACTORY_NAME=$($outputObj.data_factory_name.value)
+        DATA_FACTORY_ID=$($outputObj.data_factory_id.value)
+
+        # Databricks Information
+        DATABRICKS_HOST=$($outputObj.databricks_workspace_url.value)
+        DATABRICKS_WORKSPACE_ID=$($outputObj.databricks_workspace_id.value)
+        DATABRICKS_WORKSPACE_RESOURCE_ID=$($outputObj.databricks_workspace_resource_id.value)
+
+        # SQL Database Information
+        SQL_SERVER_ID=$($outputObj.sql_server_id.value)
+        SQL_DATABASE_ID=$($outputObj.sql_database_id.value)
+
+        # Environment Information
+        ENVIRONMENT=$(TF_VAR_environment)
+        LOCATION=$(TF_VAR_location)
+        "@
+
+        # Save to .env file
+        $envContent | Out-File -FilePath "$(System.DefaultWorkingDirectory)/ETL/azure/.env" -Encoding UTF8
+
+        # Run environment tests
+        pytest ETL/azure/tests/integration/test_environment.py -v
+      displayName: 'Generate .env file and test environment configuration'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/ETL/azure/infrastructure'
+    
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)/ETL/azure'
+        Contents: '.env'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'environment-config'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  dependsOn: Infrastructure
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - job: DeployDataFactory
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'environment-config'
+        downloadPath: '$(System.DefaultWorkingDirectory)'
+
+    - task: AzureDataFactory@2
+      inputs:
+        azureSubscription: '$(AZURE_RM_CONNECTION)'
+        ResourceGroupName: '$(RESOURCE_GROUP)'
+        DataFactoryName: '$(DATA_FACTORY_NAME)'
+        Location: '$(LOCATION)'
+        LinkedServices: 'ETL/azure/src/data-factory/linkedServices/*.json'
+        Datasets: 'ETL/azure/src/data-factory/datasets/*.json'
+        Pipelines: 'ETL/azure/src/data-factory/pipes/*.json'
+    
+  - job: DeployDatabricks
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'environment-config'
+        downloadPath: '$(System.DefaultWorkingDirectory)'
+
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+        addToPath: true
+    
+    - script: |
+        pip install databricks-cli azure-cli
+      displayName: 'Install Databricks CLI'
+    
+    - script: |
+        # Load environment variables
+        Get-Content $(System.DefaultWorkingDirectory)/environment-config/.env | foreach {
+            if ($_ -match '^([^#][^=]+)=(.+)$') {
+                $name = $matches[1].Trim()
+                $value = $matches[2].Trim()
+                Write-Host "Setting $name"
+                Write-Host "##vso[task.setvariable variable=$name]$value"
+            }
+        }
+        
+        databricks configure --token --token-value $(DATABRICKS_TOKEN)
+        databricks workspace import_dir ETL/azure/src/databricks /Shared/ETL --overwrite
+      displayName: 'Deploy Databricks notebooks'

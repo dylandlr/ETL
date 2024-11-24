@@ -1,0 +1,28 @@
+{
+    "name": "ls_adls_raw",
+    "properties": {
+        "type": "AzureBlobStorage",
+        "typeProperties": {
+            "serviceEndpoint": "@{linkedService().storageEndpoint}",
+            "accountKind": "StorageV2",
+            "servicePrincipalId": "@{linkedService().servicePrincipalId}",
+            "servicePrincipalKey": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                    "referenceName": "ls_key_vault",
+                    "type": "LinkedServiceReference"
+                },
+                "secretName": "storage-access-key"
+            }
+        },
+        "parameters": {
+            "storageEndpoint": {
+                "type": "string"
+            },
+            "servicePrincipalId": {
+                "type": "string"
+            }
+        },
+        "annotations": []
+    }
+}

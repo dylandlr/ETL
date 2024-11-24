@@ -1,0 +1,9 @@
+pytest==7.3.1
+pytest-azurepipelines==1.0.3
+pytest-cov==4.1.0
+pytest-mock==3.10.0
+azure-identity==1.13.0
+azure-mgmt-resource==23.0.1
+azure-mgmt-datafactory==3.0.0
+azure-functions==1.14.0
+python-dotenv==1.0.0

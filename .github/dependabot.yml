@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/azure"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "python"
+    reviewers:
+      - "dylandlr"
+    commit-message:
+      prefix: "pip"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    reviewers:
+      - "dylandlr"
+    commit-message:
+      prefix: "github-actions"
+      include: "scope"
+
+  # Terraform dependencies
+  - package-ecosystem: "terraform"
+    directory: "/azure/infrastructure"
+    schedule:
+      interval: "weekly"
+    target-branch: "develop"
+    labels:
+      - "dependencies"
+      - "terraform"
+    reviewers:
+      - "dylandlr"
+    commit-message:
+      prefix: "terraform"
+      include: "scope"

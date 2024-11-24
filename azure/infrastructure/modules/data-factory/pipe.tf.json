@@ -1,0 +1,15 @@
+{
+  "resource": {
+    "azurerm_data_factory_pipeline": {
+      "MainETLPipeline": {
+        "name": "pl_main_etl",
+        "data_factory_id": "${azurerm_data_factory.adf.id}",
+        "variables": {
+          "SourcePath": "default/path",
+          "SourceFileName": "default.csv"
+        },
+        "activities_json": "${jsonencode([{\"name\":\"Validate_Source_Data\",\"type\":\"Validation\",\"dependsOn\":[],\"userProperties\":[],\"typeProperties\":{\"timeout\":\"0.00:10:00\",\"dataset\":{\"referenceName\":\"ds_source_data\",\"type\":\"DatasetReference\",\"parameters\":{\"Path\":{\"value\":\"@variables('SourcePath')\",\"type\":\"Expression\"},\"FileName\":{\"value\":\"@variables('SourceFileName')\",\"type\":\"Expression\"}}}}}])}"
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# Azure Resource Configuration - Development
+environment             = "development"
+location                = "eastus2"
+resource_group_name     = "rg-etl-dev"
+data_factory_name       = "adf-etl-dev"
+key_vault_name          = "kv-etl-dev"
+storage_account_name    = "saetldev"
+databricks_workspace_name = "dbw-etl-dev"
+
+# Tags
+tags = {
+  Environment = "Development"
+  Project     = "ETL Pipeline"
+  Owner       = "Data Engineering"
+  ManagedBy   = "Terraform"
+}
