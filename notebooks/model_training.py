@@ -4,6 +4,7 @@ from pyspark.ml.classification import RandomForestClassifier
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 import mlflow
 import mlflow.spark
+from models import get_model_class, RandomForestModel
 
 def create_spark_session():
     spark = SparkSession.builder \
@@ -19,28 +20,16 @@ def prepare_features(df, feature_columns, label_column):
     )
     return assembler.transform(df).select("features", label_column)
 
-def train_model(train_data, test_data):
-    """Train a Random Forest model"""
-    rf = RandomForestClassifier(labelCol="label", featuresCol="features")
-    model = rf.fit(train_data)
+def train_model(train_data, test_data, model_type="random_forest", task_type="classification", **model_params):
+    """Modular model training function for any ML model"""
+    # Get the appropriate model class
+    model_class = get_model_class(model_type)
     
-    # Make predictions on test data
-    predictions = model.transform(test_data)
+    # Initialize and train the model
+    model = model_class(task_type=task_type, **model_params)
+    trained_model, metrics = model.train(train_data, test_data)
     
-    # Evaluate model
-    evaluator = MulticlassClassificationEvaluator(
-        labelCol="label", 
-        predictionCol="prediction", 
-        metricName="accuracy"
-    )
-    accuracy = evaluator.evaluate(predictions)
-    
-    # Log metrics and model
-    with mlflow.start_run(run_name="random_forest_training"):
-        mlflow.log_metric("accuracy", accuracy)
-        mlflow.spark.log_model(model, "random_forest_model")
-    
-    return model, accuracy
+    return trained_model, metrics
 
 def save_model(model, path):
     """Save the trained model"""
@@ -69,7 +58,7 @@ if __name__ == "__main__":
     test_data = prepare_features(test_data, feature_columns, label_column)
     
     # Train and evaluate model
-    model, accuracy = train_model(train_data, test_data)
+    model, accuracy = train_model(train_data, test_data, model_type="random_forest", task_type="classification")
     print(f"Model Accuracy: {accuracy}")
     
     # Save model

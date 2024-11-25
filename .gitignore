@@ -44,5 +44,18 @@ crash.*.log
 .pytest_cache
 .__pycache__
 
+# Ignore virtual environment
+venv/
+
+# Ignore node_modules
+node_modules/
+
+# Ignore node dependencies
+package-lock.json
+yarn.lock
+
+# Ignore .pyc files
+*.pyc
+
 
 

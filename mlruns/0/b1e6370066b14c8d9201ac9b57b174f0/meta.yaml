@@ -1,0 +1,15 @@
+artifact_uri: file:///g:/VSCODE_PROJECTS/ETL/ETL/mlruns/0/b1e6370066b14c8d9201ac9b57b174f0/artifacts
+end_time: 1732506779308
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: b1e6370066b14c8d9201ac9b57b174f0
+run_name: random_forest_training
+run_uuid: b1e6370066b14c8d9201ac9b57b174f0
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1732506772508
+status: 3
+tags: []
+user_id: delar
