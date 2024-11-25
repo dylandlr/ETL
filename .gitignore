@@ -57,5 +57,17 @@ yarn.lock
 # Ignore .pyc files
 *.pyc
 
+# Ignore .pyo files
+*.pyo
+
+# Ignore .pyclass files
+*.pyclass
+
+# mflow files
+mflow/
+mlruns/
+
+
+
 
 
